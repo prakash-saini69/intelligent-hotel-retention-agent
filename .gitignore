@@ -1,0 +1,60 @@
+# ===========================
+# 1. SECURITY (CRITICAL)
+# ===========================
+.env
+.env.local
+.env.*.local
+# Keep .env.example so people know what keys they need!
+
+# ===========================
+# 2. PYTHON & DEPENDENCIES
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+# uv.lock
+
+# ===========================
+# 3. HEAVY ARTIFACTS (Don't push these!)
+# ===========================
+# The Vector Database grows huge and is binary. Re-build it on the new machine.
+vectorstore/
+chroma_db/
+
+# The Trained Models (Optional: Comment these out if you WANT to push the model)
+models/*.joblib
+models/*.pkl
+models/*.bin
+models/*.pt
+
+# ===========================
+# 4. DATASETS
+# ===========================
+# Don't push massive CSVs. (Keep the folder structure, ignore the files)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+# (If your dummy CSV is small and you want to push it, remove the lines above)
+
+# ===========================
+# 5. IDE & OS JUNK
+# ===========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===========================
+# 6. LOGS & NOTEBOOKS
+# ===========================
+*.log
+npm-debug.log*
+.ipynb_checkpoints/

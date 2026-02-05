@@ -1,0 +1,31 @@
+# --- CORE AGENT FRAMEWORK ---
+langchain-community
+langchain-groq
+langgraph
+langchain-core
+pydantic
+
+# --- RAG LAYER ---
+chromadb
+pypdf
+sentence-transformers
+
+# --- ML LAYER ---
+scikit-learn
+pandas
+# We keep this ONE restriction because NumPy 2.0 breaks everything right now
+numpy<2.0.0
+joblib
+
+# --- DATA & DATABASE ---
+sqlalchemy
+sqlite-utils
+
+# --- FRONTEND & TOOLS ---
+streamlit
+tavily-python
+python-dotenv
+loguru
+
+# --- DEV TOOLS ---
+pytest
