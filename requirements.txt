@@ -29,3 +29,9 @@ loguru
 
 # --- DEV TOOLS ---
 pytest
+
+
+
+# notbook 
+matplotlib
+seaborn
