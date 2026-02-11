@@ -9,8 +9,10 @@ from src.ml.loader import load_data
 from src.ml.preprocessor import feature_engineering
 
 # Paths
-DB_PATH = "data/hotel_retention.db"
-MODEL_PATH = "models/churn_model.joblib"
+from src.utils.db_ops import DB_PATH
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "churn_model.joblib")
 
 def train_model():
     """Trains a Random Forest model and saves it."""

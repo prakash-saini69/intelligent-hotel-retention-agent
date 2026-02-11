@@ -4,8 +4,13 @@
 
 
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 
-@tool
+class ApprovalInput(BaseModel):
+    reason: str = Field(description="The reason for requiring approval, e.g., 'High Risk' or 'Discount > 20%'")
+    proposed_offer: str = Field(description="The specific offer being proposed, e.g., '20% discount'")
+
+@tool("request_manager_approval", args_schema=ApprovalInput)
 def request_manager_approval(reason: str, proposed_offer: str):
     """
     Requests human manager approval for high-risk or high-value offers.

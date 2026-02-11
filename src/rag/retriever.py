@@ -4,7 +4,8 @@ import os
 from langchain_community.vectorstores import Chroma
 from src.rag.embedder import get_embedding_model
 
-DB_PATH = "vectorstore/chroma_db"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "vectorstore", "chroma_db")
 
 def get_retriever(k=2):
     """

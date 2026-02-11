@@ -7,6 +7,10 @@ Memory (checkpointer) is enabled so sessions can be resumed.
 
 import sqlite3
 from typing import List
+from dotenv import load_dotenv
+
+# Load env before importing ChatGroq
+load_dotenv()
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate

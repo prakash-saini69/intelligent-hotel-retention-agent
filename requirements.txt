@@ -1,4 +1,5 @@
 # --- CORE AGENT FRAMEWORK ---
+langchain
 langchain-community
 langchain-groq
 langgraph
@@ -22,7 +23,7 @@ sqlalchemy
 sqlite-utils
 
 # --- FRONTEND & TOOLS ---
-streamlit
+streamlit>=1.35.0
 tavily-python
 python-dotenv
 loguru
@@ -38,3 +39,6 @@ seaborn
 
 # embedding 
 langchain-huggingface
+
+# server 
+flask
