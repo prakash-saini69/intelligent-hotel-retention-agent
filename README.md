@@ -111,7 +111,7 @@ When the Docker container boots on the EC2 instance, the `start.sh` entry point 
 flowchart TD
 
     A[Developer] --> B[GitHub]
-    B -->|Webhook| C[Jenkins (Local via ngrok)]
+    B -->|Webhook| C["Jenkins (Local via ngrok)"]
 
     C --> D[Jenkins Pipeline]
 
