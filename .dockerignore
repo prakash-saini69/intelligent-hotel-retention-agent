@@ -1,0 +1,38 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Git
+.git/
+.gitignore
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Data, Models, and Vectorstores 
+# (These will be fetched dynamically via S3 and start.sh at runtime)
+models/
+vectorstore/
+*.db
+*.sqlite
+agent_memory.db
+hotel.db
