@@ -101,6 +101,36 @@ When the Docker container boots on the EC2 instance, the `start.sh` entry point 
 2.  **Seeds Database:** Runs `seed_database.py` to generate a fresh, ephemeral SQLite database (`hotel.db`).
 3.  **Launches Services:** Starts both the Flask backend API and Streamlit User Interface simultaneously.
 
+
+
+
+
+### flow diagram 
+
+Developer → GitHub → Webhook → Jenkins (Local via ngrok)
+                     ↓
+               Jenkins Pipeline
+                     ↓
+  ┌────────────────────────────────────┐
+  │ 1. Install dependencies            │
+  │ 2. Run tests                       │
+  │ 3. Train ML model                  │
+  │ 4. Build ChromaDB vector store     │
+  │ 5. Upload artifacts to AWS S3      │
+  │ 6. Build Docker image              │
+  │ 7. Push image to AWS ECR           │
+  │ 8. SSH to EC2 and deploy           │
+  └────────────────────────────────────┘
+                     ↓
+              EC2 Server
+                     ↓
+        Docker Container Startup
+                     ↓
+  - Download model.joblib from S3
+  - Download chroma_db from S3
+  - Seed SQLite database
+  - Start Flask backend
+
 **Why this matters?** 
 *This approach decouples application code from data artifacts. It guarantees clean, reproducible deployments, reduces Docker image bloat, and allows us to retrain models without restarting the application infrastructure.*
 
