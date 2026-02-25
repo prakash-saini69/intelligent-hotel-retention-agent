@@ -22,7 +22,6 @@ By unifying **Machine Learning (ML)**, **Retrieval-Augmented Generation (RAG)**,
 ### 3.human  approval 
 ![Retention Options](demo/img3.png)
 
-
 ### 4. send retention email
 ![Retention Options](demo/img4.png)
 
