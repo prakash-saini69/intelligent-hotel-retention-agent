@@ -123,7 +123,7 @@ flowchart TD
     Jenkins{fa:fa-cogs Jenkins Pipeline}:::jenkins
     
     %% Jenkins Pipeline Steps
-    subgraph Jenkins Pipeline
+    subgraph JP [Jenkins Pipeline]
         direction TB
         S1[1. Install Dependencies]:::steps
         S2[2. Run Pytest]:::steps
@@ -142,7 +142,7 @@ flowchart TD
     ECR[fa:fa-box AWS ECR<br/>Docker Registry]:::aws
 
     %% Deployment Target
-    subgraph AWS EC2 Instance
+    subgraph AWS_EC2 [AWS EC2 Instance]
         direction TB
         EC2(fa:fa-server Docker Container Startup):::ec2
         D1[⬇️ Download model.joblib from S3]:::steps
@@ -156,14 +156,14 @@ flowchart TD
     %% Connections
     Dev -- Pushes Code --> GitHub
     GitHub -- Webhook Trigger --> Jenkins
-    Jenkins --> Jenkins Pipeline
+    Jenkins --> JP
     
     S5 -. Uploads Artifacts .-> S3
     S7 -. Pushes Image .-> ECR
     
-    S8 ==> |Triggers Deploy| EC2
+    S8 ==> |Triggers Deploy| AWS_EC2
     
-    ECR -. Pulls Latest Image .-> EC2
+    ECR -. Pulls Latest Image .-> AWS_EC2
     S3 -. Fetch on Startup .-> D1
 ```
 
