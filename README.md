@@ -16,11 +16,16 @@ By unifying **Machine Learning (ML)**, **Retrieval-Augmented Generation (RAG)**,
 ### 1. Main Chat Interface
 ![Chat Interface](demo/img1.png)
 
-### 2. Risk Evaluation & RAG Querying
+### 2. Agent Tool Usage & Retention Flow
 ![Risk Evaluation](demo/img2.png)
 
-### 3. Agent Tool Usage & Retention Flow
+### 3.human  approval 
 ![Retention Options](demo/img3.png)
+
+
+### 4. send retention email
+![Retention Options](demo/img4.png)
+
 
 *(Note: The `demo/` folder contains screenshots of the working Streamlit UI and Admin flow.)*
 
