@@ -105,31 +105,67 @@ When the Docker container boots on the EC2 instance, the `start.sh` entry point 
 
 
 
-### flow diagram 
+### 🌊 CI/CD Flow Diagram 
 
-Developer → GitHub → Webhook → Jenkins (Local via ngrok)
-                     ↓
-               Jenkins Pipeline
-                     ↓
-  ┌────────────────────────────────────┐
-  │ 1. Install dependencies            │
-  │ 2. Run tests                       │
-  │ 3. Train ML model                  │
-  │ 4. Build ChromaDB vector store     │
-  │ 5. Upload artifacts to AWS S3      │
-  │ 6. Build Docker image              │
-  │ 7. Push image to AWS ECR           │
-  │ 8. SSH to EC2 and deploy           │
-  └────────────────────────────────────┘
-                     ↓
-              EC2 Server
-                     ↓
-        Docker Container Startup
-                     ↓
-  - Download model.joblib from S3
-  - Download chroma_db from S3
-  - Seed SQLite database
-  - Start Flask backend
+```mermaid
+flowchart TD
+    %% Define Styles
+    classDef dev fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
+    classDef git fill:#2c3e50,stroke:#1a252f,stroke-width:2px,color:#fff
+    classDef jenkins fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
+    classDef aws fill:#f39c12,stroke:#d68910,stroke-width:2px,color:#fff
+    classDef steps fill:#ecf0f1,stroke:#bdc3c7,stroke-width:1px,color:#2c3e50
+    classDef ec2 fill:#27ae60,stroke:#2ecc71,stroke-width:2px,color:#fff
+
+    %% Nodes
+    Dev([👨‍💻 Developer]):::dev
+    GitHub(fa:fa-github GitHub Repository):::git
+    Jenkins{fa:fa-cogs Jenkins Pipeline}:::jenkins
+    
+    %% Jenkins Pipeline Steps
+    subgraph Jenkins Pipeline
+        direction TB
+        S1[1. Install Dependencies]:::steps
+        S2[2. Run Pytest]:::steps
+        S3[3. Train ML Model]:::steps
+        S4[4. Build ChromaDB]:::steps
+        S5[5. Upload to AWS S3]:::steps
+        S6[6. Build Docker Image]:::steps
+        S7[7. Push to AWS ECR]:::steps
+        S8[8. SSH Deploy]:::steps
+        
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+    end
+
+    %% AWS Artifacts
+    S3[(fa:fa-database AWS S3<br/>hotel-retention-artifacts)]:::aws
+    ECR[fa:fa-box AWS ECR<br/>Docker Registry]:::aws
+
+    %% Deployment Target
+    subgraph AWS EC2 Instance
+        direction TB
+        EC2(fa:fa-server Docker Container Startup):::ec2
+        D1[⬇️ Download model.joblib from S3]:::steps
+        D2[⬇️ Download chroma_db from S3]:::steps
+        D3[🌱 Seed SQLite Database]:::steps
+        D4[🚀 Start Flask & Streamlit]:::steps
+        
+        EC2 --> D1 --> D2 --> D3 --> D4
+    end
+
+    %% Connections
+    Dev -- Pushes Code --> GitHub
+    GitHub -- Webhook Trigger --> Jenkins
+    Jenkins --> Jenkins Pipeline
+    
+    S5 -. Uploads Artifacts .-> S3
+    S7 -. Pushes Image .-> ECR
+    
+    S8 ==> |Triggers Deploy| EC2
+    
+    ECR -. Pulls Latest Image .-> EC2
+    S3 -. Fetch on Startup .-> D1
+```
 
 **Why this matters?** 
 *This approach decouples application code from data artifacts. It guarantees clean, reproducible deployments, reduces Docker image bloat, and allows us to retrain models without restarting the application infrastructure.*
