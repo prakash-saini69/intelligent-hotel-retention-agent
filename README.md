@@ -105,66 +105,43 @@ When the Docker container boots on the EC2 instance, the `start.sh` entry point 
 
 
 
-### 🌊 CI/CD Flow Diagram 
+### 🚀 CI/CD Architecture
 
 ```mermaid
 flowchart TD
-    %% Define Styles
-    classDef dev fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
-    classDef git fill:#2c3e50,stroke:#1a252f,stroke-width:2px,color:#fff
-    classDef jenkins fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff
-    classDef aws fill:#f39c12,stroke:#d68910,stroke-width:2px,color:#fff
-    classDef steps fill:#ecf0f1,stroke:#bdc3c7,stroke-width:1px,color:#2c3e50
-    classDef ec2 fill:#27ae60,stroke:#2ecc71,stroke-width:2px,color:#fff
 
-    %% Nodes
-    Dev([👨‍💻 Developer]):::dev
-    GitHub(fa:fa-github GitHub Repository):::git
-    Jenkins{fa:fa-cogs Jenkins Pipeline}:::jenkins
-    
-    %% Jenkins Pipeline Steps
-    subgraph JP [Jenkins Pipeline]
-        direction TB
-        S1[1. Install Dependencies]:::steps
-        S2[2. Run Pytest]:::steps
-        S3[3. Train ML Model]:::steps
-        S4[4. Build ChromaDB]:::steps
-        S5[5. Upload to AWS S3]:::steps
-        S6[6. Build Docker Image]:::steps
-        S7[7. Push to AWS ECR]:::steps
-        S8[8. SSH Deploy]:::steps
-        
-        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+    A[Developer] --> B[GitHub]
+    B -->|Webhook| C[Jenkins (Local via ngrok)]
+
+    C --> D[Jenkins Pipeline]
+
+    subgraph PIPELINE [CI Pipeline]
+        D1[1. Install Dependencies]
+        D2[2. Run Tests]
+        D3[3. Train ML Model]
+        D4[4. Build ChromaDB]
+        D5[5. Upload Artifacts to S3]
+        D6[6. Build Docker Image]
+        D7[7. Push Image to ECR]
+        D8[8. Deploy to EC2]
+
+        D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7 --> D8
     end
 
-    %% AWS Artifacts
-    S3[(fa:fa-database AWS S3<br/>hotel-retention-artifacts)]:::aws
-    ECR[fa:fa-box AWS ECR<br/>Docker Registry]:::aws
+    D --> D1
 
-    %% Deployment Target
-    subgraph AWS_EC2 [AWS EC2 Instance]
-        direction TB
-        EC2(fa:fa-server Docker Container Startup):::ec2
-        D1[⬇️ Download model.joblib from S3]:::steps
-        D2[⬇️ Download chroma_db from S3]:::steps
-        D3[🌱 Seed SQLite Database]:::steps
-        D4[🚀 Start Flask & Streamlit]:::steps
-        
-        EC2 --> D1 --> D2 --> D3 --> D4
+    D8 --> E[EC2 Server]
+
+    subgraph STARTUP [Docker Container Startup]
+        S1[Download model.joblib from S3]
+        S2[Download chroma_db from S3]
+        S3[Seed SQLite Database]
+        S4[Start Flask Backend]
+
+        S1 --> S2 --> S3 --> S4
     end
 
-    %% Connections
-    Dev -- Pushes Code --> GitHub
-    GitHub -- Webhook Trigger --> Jenkins
-    Jenkins --> JP
-    
-    S5 -. Uploads Artifacts .-> S3
-    S7 -. Pushes Image .-> ECR
-    
-    S8 ==> |Triggers Deploy| AWS_EC2
-    
-    ECR -. Pulls Latest Image .-> AWS_EC2
-    S3 -. Fetch on Startup .-> D1
+    E --> S1
 ```
 
 **Why this matters?** 
