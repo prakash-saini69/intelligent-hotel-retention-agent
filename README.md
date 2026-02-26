@@ -90,10 +90,11 @@ We employ a robust, **stateless** CI/CD architecture leveraging **Jenkins** and 
     *   **Trains the ML Model** dynamically and generates `model.joblib`.
     *   **Builds the Vector Store** locally using ChromaDB.
     *   **Uploads Artifacts:** Uploads the newly generated ML model and Vector DB to an **AWS S3 Bucket** (`hotel-retention-artifacts`).
-4.  **Continuous Delivery (Docker & AWS):**
+4.  **Continuous Delivery (Docker & Nginx):**
     *   Builds a lightweight Docker image (`python:3.10-slim`). The image *excludes* the large model and database files.
-    *   Pushes the image to **AWS ECR** (Elastic Container Registry).
-    *   SSH connects to an **AWS EC2** instance and pulls the latest container.
+    *   Stops the old container and runs the new container locally on the Jenkins EC2 Server.
+    *   Exposes the Streamlit application on internal **Port 8501**.
+    *   **Nginx** acts as a reverse proxy, securely routing public traffic from **Port 80** to the internal Docker container.
 
 ### 🐳 Container Startup (Runtime Hydration)
 When the Docker container boots on the EC2 instance, the `start.sh` entry point script executes:
@@ -111,37 +112,39 @@ When the Docker container boots on the EC2 instance, the `start.sh` entry point 
 flowchart TD
 
     A[Developer] --> B[GitHub]
-    B -->|Webhook| C["Jenkins (Local via ngrok)"]
+    B -->|Webhook| C["Jenkins (Running on EC2 :8080)"]
 
     C --> D[Jenkins Pipeline]
 
-    subgraph PIPELINE [CI Pipeline]
-        D1[1. Install Dependencies]
-        D2[2. Run Tests]
-        D3[3. Train ML Model]
-        D4[4. Build ChromaDB]
-        D5[5. Upload Artifacts to S3]
-        D6[6. Build Docker Image]
-        D7[7. Push Image to ECR]
-        D8[8. Deploy to EC2]
+    subgraph PIPELINE [Jenkins Pipeline]
+        D1[Clone Repo]
+        D2[Run Tests]
+        D3[Train ML Model]
+        D4[Build ChromaDB]
+        D5[Upload Artifacts to S3]
+        D6[Build Docker Image]
+        D7[Stop Old Container]
+        D8[Run New Container]
 
         D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7 --> D8
     end
 
     D --> D1
 
-    D8 --> E[EC2 Server]
+    D8 --> E["Docker Container (Port 8501 internal)"]
+    E --> F["Nginx (Port 80 public)"]
+    F --> G["Users Access App via Public IP"]
 
     subgraph STARTUP [Docker Container Startup]
         S1[Download model.joblib from S3]
         S2[Download chroma_db from S3]
         S3[Seed SQLite Database]
-        S4[Start Flask Backend]
+        S4[Start Flask Backend & Streamlit UI]
 
         S1 --> S2 --> S3 --> S4
     end
 
-    E --> S1
+    E -.-> S1
 ```
 
 **Why this matters?** 

@@ -2,19 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // AWS and ECR Configurations
-        // Using Jenkins Credentials to hide sensitive IDs and IPs
-        AWS_ACCOUNT_ID = credentials('aws-account-id')
+        // AWS and Deployment Configurations
         AWS_REGION = 'us-east-1'
         S3_ARTIFACTS_BUCKET = 'hotel-retention-artifacts'
         
         ECR_REPO = 'hotel-retention-agent'
         IMAGE_TAG = "${env.BUILD_ID}"
-        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        
-        // EC2 Deployment Info
-        EC2_HOST = credentials('ec2-host-ip')
-        EC2_USER = 'ubuntu'
     }
 
     stages {
@@ -89,57 +82,41 @@ pipeline {
                 echo "🐳 Building Docker Image..."
                 // Note: .dockerignore will exclude the generated models/ and vectorstore/ from the image context.
                 sh 'docker build -t ${ECR_REPO}:${IMAGE_TAG} .'
-                sh 'docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}'
-                sh 'docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REGISTRY}/${ECR_REPO}:latest'
+                sh 'docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest'
             }
         }
 
-        stage('Push to AWS ECR') {
+        stage('Stop Old Container') {
             steps {
-                echo "⬆️ Pushing Docker Image to ECR..."
-                withCredentials([aws(credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
-                    sh "docker push ${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}"
-                    sh "docker push ${ECR_REGISTRY}/${ECR_REPO}:latest"
-                }
+                echo "🛑 Stopping old container..."
+                sh '''
+                    docker stop hotel-agent-app || true
+                    docker rm hotel-agent-app || true
+                '''
             }
         }
 
-        stage('Deploy to EC2') {
+        stage('Run New Container') {
             steps {
-                echo "🚀 Deploying to EC2..."
+                echo "🚀 Running new container..."
                 withCredentials([
-                    sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER'),
                     aws(credentialsId: 'aws-credentials', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'),
                     string(credentialsId: 'groq-api-key', variable: 'GROQ_KEY'),
                     string(credentialsId: 'tavily-api-key', variable: 'TAVILY_KEY')
                 ]) {
                     sh """
-                        ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                            # Ensure AWS CLI uses credentials on EC2 for ECR and S3 Artifact pulls
-                            export AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
-                            export AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
-                            export AWS_DEFAULT_REGION=${AWS_REGION}
-
-                            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                            
-                            docker stop hotel-agent-app || true
-                            docker rm hotel-agent-app || true
-                            
-                            docker pull ${ECR_REGISTRY}/${ECR_REPO}:latest
-                            
-                            # Start container. The start.sh inside will fetch from S3 using these AWS creds.
-                            docker run -d \\
-                                --name hotel-agent-app \\
-                                -p 5000:5000 \\
-                                -p 8501:8501 \\
-                                -e AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID} \\
-                                -e AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY} \\
-                                -e AWS_DEFAULT_REGION=${AWS_REGION} \\
-                                -e GROQ_API_KEY=\${GROQ_KEY} \\
-                                -e TAVILY_API_KEY=\${TAVILY_KEY} \\
-                                ${ECR_REGISTRY}/${ECR_REPO}:latest
-                        '
+                        # Start container locally on Jenkins EC2 instance.
+                        docker run -d \\
+                            --name hotel-agent-app \\
+                            --restart unless-stopped \\
+                            -p 5000:5000 \\
+                            -p 8501:8501 \\
+                            -e AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID} \\
+                            -e AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY} \\
+                            -e AWS_DEFAULT_REGION=${AWS_REGION} \\
+                            -e GROQ_API_KEY=\${GROQ_KEY} \\
+                            -e TAVILY_API_KEY=\${TAVILY_KEY} \\
+                            ${ECR_REPO}:latest
                     """
                 }
             }
@@ -148,7 +125,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI/CD Pipeline Completed Successfully! Application deployed."
+            echo "✅ CI/CD Pipeline Completed Successfully! Application deployed locally on EC2."
         }
         failure {
             echo "❌ Pipeline Failed! Please check the Jenkins logs."
